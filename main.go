@@ -16,7 +16,7 @@ func main() {
 	ws.OnClientConnect(func(socket *wshandler.Socket) {
 
 		fmt.Println("CLIENT CONNECTED")
-		socket.Emit("Hello", "Batatapalha")
+		socket.Emit("Hello", "Teste")
 	})
 
 	http.HandleFunc("/", homeController)
