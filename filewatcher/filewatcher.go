@@ -1,10 +1,9 @@
 package filewatcher
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
-
-	"fmt"
 
 	"github.com/go-fsnotify/fsnotify"
 )
@@ -66,7 +65,10 @@ func (w *Watcher) handleModification(event fsnotify.Event) {
 	eventName := event.Op.String()
 	path := event.Name
 	if eventName == "CREATE" {
-		w.walkAndAddEveryDir(path)
+		w.watcher.Add(path)
+	}
+	if eventName == "RENAME" {
+		w.watcher.Remove(path)
 	}
 	w.callback(path, eventName)
 }

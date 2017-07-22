@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title></title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+   
+  </head>
+  <body>
+    <h1>Ola</h1>
+    <h1>"{{.}}"</h1>
+  </body>
+  <script>
+    let socket = new WebSocket("{{.}}")
+    socket.onopen = () => {
+      socket.send(JSON.stringify({
+        event: "ola",
+        data: "[1, 2, 3, 4]"
+      }))
+    }
+    socket.onmessage = (data) => {
+      console.log(data)
+    }
+  </script>
+</html>
