@@ -10,10 +10,27 @@ type Socket struct {
 	client      *websocket.Conn
 	send        chan *Message
 	eventMapper map[string]func(data string)
+	forEveryEvent
+}
+
+func New(conn *websocket.Conn) *Socket {
+	return &Socket{
+		eventMapper: make(map[string]func(string)),
+		client:      conn,
+		send:        make(chan *Message),
+	}
 }
 
 func (s *Socket) On(event string, callback func(data string)) {
 	s.eventMapper[event] = callback
+}
+
+func (s *Socket) Every(callback func(data string)) {
+
+}
+
+func (s *Socket) Default(callback func(data string)) {
+
 }
 
 func (s *Socket) Emit(event string, data string) {
@@ -34,7 +51,12 @@ func (s *Socket) read() {
 			return
 		}
 
-		fmt.Println(msg.Event)
+		if callback, ok := s.eventMapper[msg.Event]; ok {
+			callback(msg.Data)
+		} else {
+
+		}
+
 	}
 }
 
