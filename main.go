@@ -17,6 +17,17 @@ func main() {
 
 		fmt.Println("CLIENT CONNECTED")
 		socket.Emit("Hello", "Teste")
+		socket.On("foo", func(data interface{}) {
+			fmt.Println(data)
+		})
+
+		socket.OnDefaultMessage(func(msg *wshandler.Message) {
+			fmt.Println("Default: ", msg)
+		})
+
+		socket.OnEveryMessage(func(msg *wshandler.Message) {
+			fmt.Println("Every: ", msg)
+		})
 	})
 
 	http.HandleFunc("/", homeController)

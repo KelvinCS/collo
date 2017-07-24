@@ -20,21 +20,17 @@ func New() *Wshandler {
 }
 
 func (ws *Wshandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	client, err := ws.upgrader.Upgrade(w, r, nil)
+	conn, err := ws.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	socket := &Socket{
-		client,
-		make(chan *Message),
-		make(map[string]func(string)),
-	}
+	client := NewSocket(conn)
+	go client.read()
+	go client.write()
 
 	if callback := ws.onConnectionCallback; callback != nil {
-		go socket.read()
-		go socket.write()
-		callback(socket)
+		callback(client)
 	}
 
 }

@@ -7,33 +7,34 @@ import (
 )
 
 type Socket struct {
-	client      *websocket.Conn
-	send        chan *Message
-	eventMapper map[string]func(data string)
-	forEveryEvent
+	client          *websocket.Conn
+	send            chan *Message
+	eventMapper     map[string]func(data interface{})
+	forEveryEvent   func(*Message)
+	forDefaultEvent func(*Message)
 }
 
-func New(conn *websocket.Conn) *Socket {
+func NewSocket(conn *websocket.Conn) *Socket {
 	return &Socket{
-		eventMapper: make(map[string]func(string)),
+		eventMapper: make(map[string]func(interface{})),
 		client:      conn,
 		send:        make(chan *Message),
 	}
 }
 
-func (s *Socket) On(event string, callback func(data string)) {
+func (s *Socket) On(event string, callback func(data interface{})) {
 	s.eventMapper[event] = callback
 }
 
-func (s *Socket) Every(callback func(data string)) {
-
+func (s *Socket) OnEveryMessage(callback func(message *Message)) {
+	s.forEveryEvent = callback
 }
 
-func (s *Socket) Default(callback func(data string)) {
-
+func (s *Socket) OnDefaultMessage(callback func(message *Message)) {
+	s.forDefaultEvent = callback
 }
 
-func (s *Socket) Emit(event string, data string) {
+func (s *Socket) Emit(event string, data interface{}) {
 	s.send <- &Message{
 		Event: event,
 		Data:  data,
@@ -51,11 +52,7 @@ func (s *Socket) read() {
 			return
 		}
 
-		if callback, ok := s.eventMapper[msg.Event]; ok {
-			callback(msg.Data)
-		} else {
-
-		}
+		s.dispatchMessageToCallback(msg)
 
 	}
 }
@@ -71,5 +68,17 @@ func (s *Socket) write() {
 				return
 			}
 		}
+	}
+}
+
+func (s *Socket) dispatchMessageToCallback(message *Message) {
+	if eventHandler, ok := s.eventMapper[message.Event]; ok {
+		eventHandler(message.Data)
+
+	} else if defaultHandler := s.forDefaultEvent; defaultHandler != nil {
+		defaultHandler(message)
+	}
+	if callback := s.forEveryEvent; callback != nil {
+		callback(message)
 	}
 }

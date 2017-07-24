@@ -17,6 +17,11 @@
         event: "ola",
         data: "[1, 2, 3, 4]"
       }))
+
+      socket.send(JSON.stringify({
+        event: 'foo',
+        data: [1, 456, 4575, 678678]
+      }))
     }
     socket.onmessage = (data) => {
       console.log(data)
