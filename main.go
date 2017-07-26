@@ -6,19 +6,16 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
-	"regexp"
+	"os"
 )
 
 var fileChange chan string
 
 func main() {
-
-	r, _ := regexp.MatchString("\\.git", "hsduhfu.githuhsudf")
-	fmt.Println(r)
-
+	fmt.Println(os.Args[1])
 	fileChange = make(chan string)
 
-	watcher := filewatcher.New("./", handleFileChange)
+	watcher := filewatcher.New(os.Args[1], handleFileChange)
 	watcher.Start()
 
 	ws := wshandler.New()
@@ -34,7 +31,7 @@ func main() {
 		}()
 	})
 
-	fs := http.FileServer(http.Dir("./w"))
+	fs := http.FileServer(http.Dir(os.Args[1]))
 
 	http.Handle("/watcher/", http.StripPrefix("/watcher", fs))
 	http.HandleFunc("/", homeController)
