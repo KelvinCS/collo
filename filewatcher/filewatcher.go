@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 
 	"github.com/go-fsnotify/fsnotify"
 )
@@ -38,6 +39,10 @@ func (w *Watcher) Start() error {
 
 func (w *Watcher) walkAndAddEveryDir(path string) error {
 	err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
+
+		if havePattern, _ := regexp.MatchString("\\.git", path); havePattern {
+			return nil
+		}
 		if info.IsDir() {
 			return w.watcher.Add(path)
 		}

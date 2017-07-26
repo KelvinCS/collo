@@ -4,27 +4,32 @@
     <title></title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-   
   </head>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    iframe {
+      margin: 0;
+      width: 100vw;
+      height: 100vh;
+    }
+  
+  </style>
   <body>
-    <h1>Ola</h1>
-    <h1>"{{.}}"</h1>
+    <iframe id="view" src="http://localhost:3000/watcher" frameborder="0"></iframe>
   </body>
   <script>
-    let socket = new WebSocket("{{.}}")
-    socket.onopen = () => {
-      socket.send(JSON.stringify({
-        event: "ola",
-        data: "[1, 2, 3, 4]"
-      }))
+    let iframe = document.querySelector("#view");
+    let view = iframe.contentWindow || iframe.contentDocument.document || iframe.contentDocument;
 
-      socket.send(JSON.stringify({
-        event: 'foo',
-        data: [1, 456, 4575, 678678]
-      }))
-    }
-    socket.onmessage = (data) => {
-      console.log(data)
+    
+    let socket = new WebSocket("ws://localhost:3000/ws")
+    socket.onmessage = (message) => {
+      console.log(message)
+      iframe.src = iframe.src
     }
   </script>
 </html>
