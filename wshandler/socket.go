@@ -1,8 +1,6 @@
 package wshandler
 
 import (
-	"fmt"
-
 	"github.com/gorilla/websocket"
 )
 
@@ -48,8 +46,7 @@ func (s *Socket) read() {
 
 		if err != nil {
 			s.client.Close()
-			fmt.Println("SOCKET ERROR:", err)
-			return
+			break
 		}
 
 		s.dispatchMessageToCallback(msg)
@@ -63,9 +60,9 @@ func (s *Socket) write() {
 		case msg := <-s.send:
 			err := s.client.WriteJSON(msg)
 			if err != nil {
-				fmt.Println("SOCKET WRITE ERROR", err)
 				s.client.Close()
-				return
+				close(s.send)
+				break
 			}
 		}
 	}
