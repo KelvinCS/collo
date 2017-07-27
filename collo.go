@@ -6,14 +6,21 @@ import (
 	"flag"
 	"fmt"
 	"html/template"
+	"math/rand"
 	"net/http"
+	"os/exec"
+	"time"
 )
 
 var fileChange = make(chan string)
+var prefix string
 
 func main() {
+	rand.Seed(time.Now().UTC().UnixNano())
+	prefix = fmt.Sprintf("%d", rand.Int())
 
-	watchDir := flag.String("watch", "./", "Root dir to watch for modifications")
+	watchDir := flag.String("w", "./", "Root dir to watch for modifications")
+	port := flag.String("p", ":3000", "Port to listen server. Default is port :3000")
 	flag.Parse()
 
 	watcher := filewatcher.New(*watchDir, handleFileChange)
@@ -34,69 +41,31 @@ func main() {
 
 	fs := http.FileServer(http.Dir(*watchDir))
 
+	path := "/watcher" + prefix
+	fmt.Println(path)
 	http.HandleFunc("/", homeController)
-	http.Handle("/watcher/", http.StripPrefix("/watcher", fs))
+	http.Handle(path+"/", http.StripPrefix(path, fs))
 	http.Handle("/ws", ws)
 
-	fmt.Println("Open your web browser and go to `http://localhost:3000`")
-	http.ListenAndServe(":3000", nil)
+	fmt.Println("Open your web browser and go to `http://localhost" + *port + "`")
+	exec.Command("google-chrome-stable", "http://localhost"+*port).Run()
+
+	err := http.ListenAndServe(*port, nil)
+	fmt.Println(err)
 }
 
 func handleFileChange(path string, eventName string) {
-	fmt.Println(path)
+	fmt.Println(path, eventName)
 	fileChange <- path
 }
 
 func homeController(w http.ResponseWriter, r *http.Request) {
 	homeTemplate, _ := template.New("").Parse(HomeTemplate)
-	homeTemplate.Execute(w, r.Host)
+	homeTemplate.Execute(w, struct {
+		Prefix string
+		Host   string
+	}{
+		prefix,
+		r.Host,
+	})
 }
-
-const HomeTemplate = `
-	
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <title></title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-  </head>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-    }
-    iframe {
-      margin: 0;
-      width: 100vw;
-      height: 100vh;
-    }
-  
-  </style>
-  <body>
-    <iframe id="view" src="http://{{.}}/watcher" frameborder="0"></iframe>
-  </body>
-  <script>
-    let iframe = document.querySelector("#view");
-    let view = iframe.contentWindow || iframe.contentDocument.document || iframe.contentDocument;
-
-    
-		let socket = new WebSocket("ws://{{.}}/ws")
-		
-    socket.onmessage = (message) => {
-      console.log(message)
-      iframe.src = iframe.src
-    }
-
-    socket.onerror = (err) => {
-      console.log(err)
-    }
-
-    socket.onopen = (q) => {
-      console.log(q)
-    }
-  </script>
-</html>
-
-`

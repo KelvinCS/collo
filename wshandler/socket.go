@@ -45,7 +45,6 @@ func (s *Socket) read() {
 		err := s.client.ReadJSON(msg)
 
 		if err != nil {
-			s.client.Close()
 			break
 		}
 
@@ -55,13 +54,13 @@ func (s *Socket) read() {
 }
 
 func (s *Socket) write() {
+	defer s.client.Close()
+	defer close(s.send)
 	for {
 		select {
 		case msg := <-s.send:
 			err := s.client.WriteJSON(msg)
 			if err != nil {
-				s.client.Close()
-				close(s.send)
 				break
 			}
 		}
